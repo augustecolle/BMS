@@ -4,13 +4,18 @@ import RPi.GPIO as GPIO
 import numpy as np
 import sys
 
+global datadict
+datadict = {}
+
 global spi
 global spi2
 global currentoffset
 global already_initiated
 global already_calibrated
+global initiated_meting
 already_calibrated = 0
 already_initiated = 0
+initiated_meting = 0
 currentoffset = 0
 
 
@@ -63,7 +68,7 @@ def getVoltageMaster():
     GPIO.output(25, GPIO.HIGH) #slave select current measurement
     setBFPCTRL(int(getBFPCTRL(), 2) & 0xEF)
     #print(hex(int(getBFPCTRL(), 2)))
-    time.sleep(0.10)
+    time.sleep(0.12)
     resp = spi2.xfer2([0x00, 0x00, 0x00, 0x00])
     #print(resp)
     tot = ((resp[0] & 0x1F) << 17) | (resp[1] << 9) | (resp[2] << 1) | (resp[3] >> 7)
@@ -71,7 +76,10 @@ def getVoltageMaster():
     #print(bin(((int(resp[0], 2) & 0x1F) << 17) | (int(resp[1], 2) << 9)))
     #print(bin(((int(resp[0], 2) & 0x1F) << 17) | (int(resp[1], 2) << 9) | (int(resp[2], 2) << 1)))
     setBFPCTRL(int(getBFPCTRL(), 2) | 0x10)
-    return (twos_comp(tot, 22))*4.096/2.0**21
+    res = (twos_comp(tot, 22))*4.096/2.0**21
+    if initiated_meting:
+        datadict['master voltage'].append(res)
+    return res
 
 
 #------------------------WRITE OPERATIONS----------------------
@@ -371,15 +379,19 @@ def getREC():
 
 def getCurrent():
     global currentoffset
+    global initiated_meting
     GPIO.output(25, GPIO.LOW)    
     IPN = 200 #nominal current LEM HAIS
     resp = 0
-    time.sleep(0.10)
+    time.sleep(0.12)
     resp = spi2.xfer2([0x00, 0x00, 0x00, 0x00])
     #print(resp)
     tot = ((resp[0] & 0x1F) << 17) | (resp[1] << 9) | (resp[2] << 1) | (resp[3] >> 7)
     GPIO.output(25, GPIO.HIGH)
-    return ((twos_comp(tot, 22))*1.250/2.0**21*IPN/0.625 - currentoffset)
+    res = ((twos_comp(tot, 22))*1.250/2.0**21*IPN/0.625 - currentoffset)
+    if (initiated_meting):
+        datadict['master current'].append(res)
+    return res
 
 def getData():
     resp = 0
@@ -390,6 +402,9 @@ def currentCal(n = 10):
     '''Calculate current offset with no load, returns mean value and standard deviation of n samples'''
     global currentoffset
     global already_calibrated
+    global initiated_meting
+    temp = initiated_meting
+    initiated_meting = 0
     pop = []
     for x in range(n):
         pop.append(getCurrent())
@@ -400,7 +415,9 @@ def currentCal(n = 10):
         already_calibrated = already_calibrated + 1
     else:
         currentoffset = currentoffset + meanvalue
+    initiated_meting = temp
     return [meanvalue, std, pop]
+
 
 def callback_can(channel):
     slave = int(getRXBnEID0(), 2)
@@ -419,13 +436,47 @@ def callback_can(channel):
     setCANINTF(0x00)
     print(answer)
 
+
+def callback_can_meting(channel):
+    global datadict
+    slave = int(getRXBnEID0(), 2)
+    message = int(getRXBnSIDL(), 2)
+    if (message & 0x80):
+        datadict[slave].append(getVoltage())
+    setCANINTF(0x00)
+    GPIO.output(26, GPIO.HIGH)
+    time.sleep(0.005)
+    GPIO.output(26, GPIO.LOW)
     
-def getSlaveVoltage(slaveaddresses = [0x01]):
+
+def getVoltageSlaves(slaveaddresses = []):
     setTXBnDM([3 for x in range(8)], 0)
     for slave in slaveaddresses:
         setCANINTF(0x00)
         setTXBnEID0(slave)
         setTXBnCTRL(0x0B) 
+        GPIO.output(20, GPIO.HIGH)
+        time.sleep(0.05)
+        GPIO.output(20, GPIO.LOW)
+
+def init_meting(slaves = []):
+    global datadict
+    global initiated_meting
+    datadict = {}
+    initiated_meting = 1
+    datadict['master voltage'] = []
+    datadict['master current'] = []
+    datadict['timestamp'] = []
+    for slave in slaves:
+        datadict[slave] = []
+    GPIO.remove_event_detect(4)
+    GPIO.add_event_detect(4, GPIO.FALLING)
+    GPIO.add_event_callback(4, callback = callback_can_meting)
+    return datadict
+
+def exit_meting():
+    global initiated_meting
+    initiated_meting = 0
 
 def master_init(CNF1=0x0F, CNF2=0x90, CNF3=0x02):
     '''initiate master, first function to be called. Sets up the GPIO pins, interrupt routines and BFPCTRL which controlls the state of the bleeding resistor and de slave select of the analog ADC'''
@@ -434,12 +485,12 @@ def master_init(CNF1=0x0F, CNF2=0x90, CNF3=0x02):
     startSpi(10000, 1)
     if (already_initiated == 0):
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(26, GPIO.OUT)
-        GPIO.setup(4, GPIO.IN)
-        GPIO.setup(25, GPIO.OUT)
-        GPIO.setup(23, GPIO.OUT)
-        GPIO.setup(20, GPIO.OUT)
-        GPIO.setup(21, GPIO.OUT)
+        GPIO.setup(26, GPIO.OUT) #LED RX-CAN
+        GPIO.setup(4, GPIO.IN) #Interrupt pin
+        GPIO.setup(25, GPIO.OUT) #slave select
+        GPIO.setup(23, GPIO.OUT) #Error
+        GPIO.setup(20, GPIO.OUT) #TX-CAN
+        GPIO.setup(21, GPIO.OUT) #not working...
         GPIO.output(25, GPIO.HIGH) #slave select current measurement
         GPIO.add_event_detect(4, GPIO.FALLING)
         GPIO.add_event_callback(4, callback = callback_can)

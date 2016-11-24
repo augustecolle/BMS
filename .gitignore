@@ -1,0 +1,5 @@
+#untracked files:
+*.sw[opn]
+*.py[c]
+/karel
+/backup

@@ -3,67 +3,22 @@ import imp
 #au = imp.load_source('module.name', '/home/pi/spi_auguste/spi_can/can_lib_auguste.py')
 
 import can_lib_auguste as au
-import RPi.GPIO as GPIO
 imp.reload(au)
 
-au.startSpi(1000, 0)
-au.startSpi(1000, 1)
-
-GPIO.output(25, GPIO.LOW)    
-GPIO.output(25, GPIO.HIGH)    
-GPIO.output(23, GPIO.HIGH)    
-GPIO.output(23, GPIO.LOW)    
-
-GPIO.output(26, GPIO.HIGH)    
-GPIO.output(21, GPIO.HIGH)
-GPIO.output(20, GPIO.HIGH)    
-
-au.getBFPCTRL()
-au.setBFPCTRL(0x2C)
-au.setBFPCTRL(0x3C)
-au.setBFPCTRL(0x1C)
-au.getVoltage()
-au.getData()
-au.setBFPCTRL(0x3C)
-
+au.master_init()
 au.getCurrent()
-print("DONE")
-a = time.time()
 mean, std, pop = au.currentCal(100)
-b = time.time()
-print(b-a)
+import RPi.GPIO as GPIO
+
 au.getVoltageMaster()
 
-CNF1 = 0x0F 
-CNF2 = 0x90
-CNF3 = 0x02
-au.getCANCTRL()
-au.softReset()
-au.setCANCTRL(0x80) #set configuration mode
-au.setCANINTE(0x0E) #enable interrupts on transmit empty and on receive full
-au.extendedID()        #enable extended identifier
-au.setCANINTF(0x00) #clear all interrupt flags
-au.setRXBnCTRL(0x64)    #accept all incomming messages and enable roll over
-au.setCNF1(CNF1)    #Used to be:0x0F 
-au.setCNF2(CNF2)    #Used to be:0x90
-au.setCNF3(CNF3)    #Used to be:0x02
+au.getSlaveVoltage([0x03, 0x02, 0x01])
+print("DONE")
+au.getVoltage()
+au.getRXBnSIDL()
+int(au.getRXBnSIDL(), 2) & 0x80
+au.getCANINTE()
 
-au.setTXBnSIDH(0x00, 0) #set standard identifier 8 high bits
-au.setTXBnSIDL(0x08, 0) #set low 3 bits stid and extended identifier
-au.setTXBnEID8(0x00, 0)
-au.setTXBnEID0(0x01, 0)
-
-au.setTXBnDLC(0x01, 0)  #Transmitted message will be a dataframe with 1 bits
-au.setTXBnDM([3 for x in range(8)], 0)
-au.setCANCTRL(0x00)
-
-au.getTXBnDM()
-
-au.getCANINTF()
-au.setCANINTF(0x00)
-au.getTXBnCTRL()
-au.setTXBnCTRL(0x0B)
-au.setTXBnCTRL(0x00)
 au.getVoltage()
 print(au.getVoltage())
 
@@ -130,3 +85,4 @@ print(TEClist)
 print(REClist)
 print(voltage)
 
+au.master_exit()

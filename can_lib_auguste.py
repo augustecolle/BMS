@@ -2,10 +2,15 @@ import spidev
 import time
 import RPi.GPIO as GPIO
 import numpy as np
+import sys
 
 global spi
 global spi2
 global currentoffset
+global already_initiated
+global already_calibrated
+already_calibrated = 0
+already_initiated = 0
 currentoffset = 0
 
 
@@ -57,10 +62,10 @@ def getVoltage(n = 0):
 def getVoltageMaster():
     GPIO.output(25, GPIO.HIGH) #slave select current measurement
     setBFPCTRL(int(getBFPCTRL(), 2) & 0xEF)
-    print(hex(int(getBFPCTRL(), 2)))
-    time.sleep(0.15)
+    #print(hex(int(getBFPCTRL(), 2)))
+    time.sleep(0.10)
     resp = spi2.xfer2([0x00, 0x00, 0x00, 0x00])
-    print(resp)
+    #print(resp)
     tot = ((resp[0] & 0x1F) << 17) | (resp[1] << 9) | (resp[2] << 1) | (resp[3] >> 7)
     #print(bin((int(resp[0], 2) & 0x1F) << 17))
     #print(bin(((int(resp[0], 2) & 0x1F) << 17) | (int(resp[1], 2) << 9)))
@@ -367,11 +372,11 @@ def getREC():
 def getCurrent():
     global currentoffset
     GPIO.output(25, GPIO.LOW)    
-    time.sleep(0.10)
     IPN = 200 #nominal current LEM HAIS
     resp = 0
+    time.sleep(0.10)
     resp = spi2.xfer2([0x00, 0x00, 0x00, 0x00])
-    print(resp)
+    #print(resp)
     tot = ((resp[0] & 0x1F) << 17) | (resp[1] << 9) | (resp[2] << 1) | (resp[3] >> 7)
     GPIO.output(25, GPIO.HIGH)
     return ((twos_comp(tot, 22))*1.250/2.0**21*IPN/0.625 - currentoffset)
@@ -384,28 +389,82 @@ def getData():
 def currentCal(n = 10):
     '''Calculate current offset with no load, returns mean value and standard deviation of n samples'''
     global currentoffset
+    global already_calibrated
     pop = []
     for x in range(n):
         pop.append(getCurrent())
     std = np.std(pop)
     meanvalue = np.mean(pop)
-    currentoffset = meanvalue
+    if (not already_calibrated):
+        currentoffset = meanvalue
+        already_calibrated = already_calibrated + 1
+    else:
+        currentoffset = currentoffset + meanvalue
     return [meanvalue, std, pop]
 
 def callback_can(channel):
-    print("interrupt received!")
+    slave = int(getRXBnEID0(), 2)
+    message = int(getRXBnSIDL(), 2)
+    print("Interrupt received!")
+    print("Message from slave: " + str(slave))
+    answer = "Slave says: "
+    if (message & 0x80):
+        answer = answer + "I've sent you my voltage measurement " + str(getVoltage())
+    elif (message & 0x40):
+        answer = answer + "I've disabled bleeding"
+    elif (message & 0x20):
+        anser = answer + "I've enabled bleeding"
+    else:
+        anser = answer + "Contact auguste.colle@kuleuven.be, something went wrong"
+    setCANINTF(0x00)
+    print(answer)
 
-def master_init():
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(26, GPIO.OUT)
-    GPIO.setup(4, GPIO.IN)
-    GPIO.setup(25, GPIO.OUT)
-    GPIO.setup(23, GPIO.OUT)
-    GPIO.setup(20, GPIO.OUT)
-    GPIO.setup(21, GPIO.OUT)
-    GPIO.output(25, GPIO.HIGH) #slave select current measurement
-    GPIO.add_event_detect(4, GPIO.FALLING)
-    GPIO.add_event_callback(4, callback = callback_can)
+    
+def getSlaveVoltage(slaveaddresses = [0x01]):
+    setTXBnDM([3 for x in range(8)], 0)
+    for slave in slaveaddresses:
+        setCANINTF(0x00)
+        setTXBnEID0(slave)
+        setTXBnCTRL(0x0B) 
+
+def master_init(CNF1=0x0F, CNF2=0x90, CNF3=0x02):
+    '''initiate master, first function to be called. Sets up the GPIO pins, interrupt routines and BFPCTRL which controlls the state of the bleeding resistor and de slave select of the analog ADC'''
+    global already_initiated
+    startSpi(10000, 0)
+    startSpi(10000, 1)
+    if (already_initiated == 0):
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(26, GPIO.OUT)
+        GPIO.setup(4, GPIO.IN)
+        GPIO.setup(25, GPIO.OUT)
+        GPIO.setup(23, GPIO.OUT)
+        GPIO.setup(20, GPIO.OUT)
+        GPIO.setup(21, GPIO.OUT)
+        GPIO.output(25, GPIO.HIGH) #slave select current measurement
+        GPIO.add_event_detect(4, GPIO.FALLING)
+        GPIO.add_event_callback(4, callback = callback_can)
+        already_initiated = 1
+        softReset()
+        setCANCTRL(0x80) #set configuration mode
+        setCANINTE(0x03) #enable interrupts on receive full
+        extendedID()        #enable extended identifier
+        setCANINTF(0x00) #clear all interrupt flags
+        setRXBnCTRL(0x64)    #accept all incomming messages and enable roll over
+        setCNF1(CNF1)    #Used to be:0x0F 
+        setCNF2(CNF2)    #Used to be:0x90
+        setCNF3(CNF3)    #Used to be:0x02
+        setTXBnSIDH(0x00, 0) #set standard identifier 8 high bits
+        setTXBnSIDL(0x08, 0) #set low 3 bits stid and extended identifier
+        setTXBnEID8(0x00, 0)
+        setTXBnDLC(0x01, 0)  #Transmitted message will be a dataframe with 1 byte
+        setCANCTRL(0x00)
+        setCANINTF(0x00)
+        setBFPCTRL(0x0C)
     return 0
 
-
+def master_exit():
+    '''Should be called at the end of a program for a clean exit'''
+    global already_initiated
+    already_initiated = 0
+    GPIO.cleanup()
+    sys.exit(0)

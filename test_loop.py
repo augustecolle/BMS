@@ -26,7 +26,7 @@ au.setCNF3(0x02) # au.setCNF3(0x05)    #Used to be:0x02
 au.setTXBnSIDH(0x00, 0) #set standard identifier 8 high bits
 au.setTXBnSIDL(0x08, 0) #set low 3 bits stid and extended identifier
 au.setTXBnEID8(0x00, 0)
-au.setTXBnEID0(0x06, 0)
+au.setTXBnEID0(0x01, 0)
 
 au.setTXBnDLC(0x08, 0)  #Transmitted message will be a dataframe with 8 bits
 time.sleep(stime)
@@ -45,6 +45,7 @@ au.setCANINTF(0x00)
 au.getTXBnCTRL()
 au.setTXBnCTRL(0x0B)
 au.getEFLG()
+au.getRXBnSIDL()
 print(au.getVoltage())
 
 au.setTXBnCTRL(0x0B, 0) #set TXREQ bit high and highest message priority

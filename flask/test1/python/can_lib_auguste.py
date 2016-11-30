@@ -65,10 +65,11 @@ def getVoltage(n = 0):
     return (twos_comp(tot, 22))*4.096/2.0**21
 
 def getVoltageMaster():
+    global datadict
     GPIO.output(25, GPIO.HIGH) #slave select current measurement
     setBFPCTRL(int(getBFPCTRL(), 2) & 0xEF)
     #print(hex(int(getBFPCTRL(), 2)))
-    time.sleep(0.12)
+    time.sleep(0.10)
     resp = spi2.xfer2([0x00, 0x00, 0x00, 0x00])
     #print(resp)
     tot = ((resp[0] & 0x1F) << 17) | (resp[1] << 9) | (resp[2] << 1) | (resp[3] >> 7)
@@ -380,10 +381,11 @@ def getREC():
 def getCurrent():
     global currentoffset
     global initiated_meting
+    global datadict
     GPIO.output(25, GPIO.LOW)    
     IPN = 200 #nominal current LEM HAIS
     resp = 0
-    time.sleep(0.12)
+    time.sleep(0.10)
     resp = spi2.xfer2([0x00, 0x00, 0x00, 0x00])
     #print(resp)
     tot = ((resp[0] & 0x1F) << 17) | (resp[1] << 9) | (resp[2] << 1) | (resp[3] >> 7)
@@ -459,6 +461,25 @@ def getVoltageSlaves(slaveaddresses = []):
         GPIO.output(20, GPIO.HIGH)
         time.sleep(0.05)
         GPIO.output(20, GPIO.LOW)
+    time.sleep(0.10)
+    return [datadict[x][-1] for x in slaveaddresses]
+
+
+def getAll(slaveaddresses = [], sleeptime = 0.15):
+    global datadict
+    datadict = {key:[] for key in datadict}
+    voltm = getVoltageMaster()
+    currentm = getCurrent()
+    setTXBnDM([3 for x in range(8)], 0)
+    for slave in slaveaddresses:
+        setCANINTF(0x00)
+        setTXBnEID0(slave)
+        setTXBnCTRL(0x0B) 
+        GPIO.output(20, GPIO.HIGH)
+        time.sleep(0.05)
+        GPIO.output(20, GPIO.LOW)
+    time.sleep(sleeptime)
+    return [currentm, voltm] + [datadict[x][-1] if datadict[x] else -1 for x in slaveaddresses]
 
 def init_meting(slaves = []):
     global datadict

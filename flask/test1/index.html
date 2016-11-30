@@ -5,9 +5,80 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script type="text/javascript" src="./js/ui-bootstrap-tpls-2.3.0.min.js"></script>
+  <script type="text/javascript" src="./js/paper-full.min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+  <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+  <script type="text/javascript">
+  
+  var app = angular.module('myApp', []);
+  app.run(function($rootScope){
+      $rootScope.Current = -1;
+      $rootScope.Timestamp = -1;
+      $rootScope.Slave1 = -1;
+      $rootScope.Slave2 = -1;
+      $rootScope.Slave3 = -1;
+      $rootScope.Slave4 = -1;
+      $rootScope.Slave5 = -1;
+      $rootScope.Slave6 = -1;
+  });
+  
+  app.controller('myCtrl', function($scope, $rootScope, $http, $timeout) {
+      $scope.getData = function(){
+          $rootScope.rawSVGbattery = '<?xml version="1.0" encoding="UTF-8" standalone="no"?> <!-- Created with Inkscape (http://www.inkscape.org/) --> <svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="210mm" height="297mm" viewBox="0 0 744.09448819 1052.3622047" id="svg4486" version="1.1" inkscape:version="0.91 r13725" sodipodi:docname="batterij.svg"> <defs id="defs4488" /> <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="1.4" inkscape:cx="253.87642" inkscape:cy="640.07442" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="false" inkscape:window-width="1920" inkscape:window-height="996" inkscape:window-x="0" inkscape:window-y="27" inkscape:window-maximized="1" /> <metadata id="metadata4491"> <rdf:RDF> <cc:Work rdf:about=""> <dc:format>image/svg+xml</dc:format> <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" /> <dc:title></dc:title> </cc:Work> </rdf:RDF> </metadata> <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"> <path style="fill:#060000;fill-opacity:1;stroke:none;stroke-opacity:1" inkscape:connector-curvature="0" d="m 597.14286,314.50507 c 0,-15 -3.38,-20 -20,-20 l -15,0 0,-45 c 0,-29.547 -5.453,-35 -35,-35 l -375,0 c -29.547,0 -35,5.453 -35,35 l 0,239.99999 c 0,29.54701 5.453,35 35,35 l 375,0 c 29.547,0 35,-5.45299 35,-35 l 0,-45 15,0 c 16.62,0 20,-5 20,-20 z m -69.813,-48.094 c -0.02,4.666 -0.187,10.594 -0.187,18.094 l 0,169.99999 c 0,40 5,35 -35,35 l -304.99999,0 c -40.00001,0 -35.00001,5 -35.00001,-35 l 0,-169.99999 c 0,-40 -5,-35 35.00001,-35 l 304.99999,0 c 32.5,0 35.283,-3.31 35.188,16.906 z" id="path4914-9" sodipodi:nodetypes="sscsssssssscssscsssssssscc" /> </g> </svg>'
+          $http.get("http://10.128.16.13:5000/ActualValues")
+          .then(function(response) {
+              $rootScope.Current = response.data["Current"];
+              $rootScope.Timestamp = response.data["Timestamp"];
+              $rootScope.Slave1 = response.data["MVoltage"];
+              $rootScope.Slave2 = response.data["Sl1Voltage"];
+              $rootScope.Slave3 = response.data["Sl2Voltage"];
+              $rootScope.Slave4 = response.data["Sl3Voltage"];
+              $rootScope.Slave5 = response.data["Sl4Voltage"];
+              $rootScope.Slave6 = response.data["Sl5Voltage"];
+              $rootScope.Slave7 = response.data["Sl6Voltage"];
+              $rootScope.Slave8 = response.data["Sl7Voltage"];
+              console.log(response.data["Current"]);
+          });
+      };
+      $scope.intervalFunction = function(){
+          $timeout(function(){
+              $scope.getData();
+              $scope.intervalFunction();
+          }, 1000)
+      };
+      $scope.intervalFunction();
+  });
+  
+  app.directive('draw', ['$timeout', function(timer){
+      return {
+          restrict: 'A',
+          scope: true,
+          link: function postLink(scope, element, attrs){
+              console.log(element);
+              function test(element){
+                scope.paper = new paper.PaperScope();
+                scope.paper.setup(element);
+                paper = scope.paper;
+                paper.svg(rawSVGbattery);
+                var path = new paper.Path();
+                path.strokeColor = 'black';
+                path.add(new paper.Point(0,0));
+                path.add(new paper.Point(100,50));
+                paper.view.draw()
+                console.log(path);
+              }
+            timer(test(element[0]), 0);
+            }
+          };
+  }]);
+  
+  </script>
+
+
   <style>
     /* Remove the navbar's default margin-bottom and rounded borders */ 
     .navbar {
@@ -76,13 +147,35 @@
       <p><a href="#">Link</a></p>
     </div>
     <div class="col-sm-8 text-left"> 
-      <h1>Welcome</h1>
 
 <div ng-app="myApp" ng-controller="myCtrl"> 
-
-<p>Today's welcome message is:</p>
-<h1>{{myWelcome}}</h1>
-
+    <p></p>
+  <div class = "row">
+      <div class="col-lg-6" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Timestamp}} </p> </div>
+      <div class="col-lg-6" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Current}} </p> </div>
+  </div>
+  <div class = "row">
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave1}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave2}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave3}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave4}} </p> </div>
+  </div>
+  <div class = "row">
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave5}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave6}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave7}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave8}} </p> </div>
+  </div>
+  <div class = "row">
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+    <div class="col-xs-1" style="text-align:center"> <canvas id="canvas" draw></canvas> </div>
+  </div>
 </div>
 
 
@@ -109,25 +202,3 @@
 </body>
 </html>
 
-<script>
-
-var app = angular.module('myApp', []);
-app.controller('myCtrl', function($scope, $http, $timeout) {
-    $scope.getData = function(){
-        $http.get("http://10.128.16.13:5000/ActualValues")
-        .then(function(response) {
-            $scope.myWelcome = response.data;
-        });
-    };
-
-    $scope.intervalFunction = function(){
-        $timeout(function(){
-            $scope.getData();
-            $scope.intervalFunction();
-        }, 1000)
-    };
-
-    $scope.intervalFunction();
-});
-
-</script>

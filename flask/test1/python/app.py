@@ -27,7 +27,8 @@ class ActualValues(Resource):
         con = lite.connect('/home/pi/spi_auguste/spi_can/flask/test1/python/sqlite/test.db', timeout = 5.0)
         with con:
             cur = con.cursor()
-            cur.execute("select * from Metingen where Timestamp = (select max(Timestamp) from Metingen)")
+            #cur.execute("select * from Metingen where Timestamp = (select max(Timestamp) from Metingen)")
+            cur.execute("select * from Metingen order by Timestamp desc limit 1")
             row = cur.fetchone()
         if con: con.close()
         print(row)

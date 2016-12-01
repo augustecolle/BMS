@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script type="text/javascript" src="./js/ui-bootstrap-tpls-2.3.0.min.js"></script>
+  <script type="text/javascript" src="./js/paper-full.min.js"></script>
+  <script type="text/javascript" src="./js/svg.min.js"></script>
+  <script type="text/javascript" src="./js/tryOutAuguste.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+  <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+  <script type="text/javascript">
+  
+  var app = angular.module('myApp', []);
+  app.run(function($rootScope){
+      $rootScope.Current = -1;
+      $rootScope.Timestamp = -1;
+      $rootScope.Slave1 = -1;
+      $rootScope.Slave2 = -1;
+      $rootScope.Slave3 = -1;
+      $rootScope.Slave4 = -1;
+      $rootScope.Slave5 = -1;
+      $rootScope.Slave6 = -1;
+      $rootScope.Slave7 = -1;
+      $rootScope.Slave8 = -1;
+      $rootScope.rawSVGbattery = '<?xml version="1.0" encoding="UTF-8" standalone="no"?> <!-- Created with Inkscape (http://www.inkscape.org/) --> <svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="210mm" height="297mm" viewBox="0 0 744.09448819 1052.3622047" id="svg2" version="1.1" inkscape:version="0.91 r13725" sodipodi:docname="test.svg"> <defs id="defs4" /> <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="0.7" inkscape:cx="213.55968" inkscape:cy="551.23449" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="false" inkscape:window-width="1920" inkscape:window-height="996" inkscape:window-x="0" inkscape:window-y="27" inkscape:window-maximized="1" /> <metadata id="metadata7"> <rdf:RDF> <cc:Work rdf:about=""> <dc:format>image/svg+xml</dc:format> <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" /> <dc:title></dc:title> </cc:Work> </rdf:RDF> </metadata> <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1"> <rect style="color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:0.50199998;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate" id="rect4136" width="744.28571" height="1060" x="1.4285715" y="-0.4949387" /> </g> </svg>'
+  });
+  
+  app.controller('myCtrl', function($scope, $rootScope, $http, $timeout) {
+      
+      $scope.getData = function(){
+          $http.get("http://10.128.16.13:5000/ActualValues")
+          .then(function(response) {
+              $rootScope.Current = response.data["Current"];
+              $rootScope.Timestamp = response.data["Timestamp"];
+              $rootScope.Slave1 = response.data["MVoltage"];
+              $rootScope.Slave2 = response.data["Sl1Voltage"];
+              $rootScope.Slave3 = response.data["Sl2Voltage"];
+              $rootScope.Slave4 = response.data["Sl3Voltage"];
+              $rootScope.Slave5 = response.data["Sl4Voltage"];
+              $rootScope.Slave6 = response.data["Sl5Voltage"];
+              $rootScope.Slave7 = response.data["Sl6Voltage"];
+              $rootScope.Slave8 = response.data["Sl7Voltage"];
+              console.log(response.data["Current"]);
+          });
+      };
+      $scope.intervalFunction = function(){
+          $timeout(function(){
+              $scope.getData();
+              $scope.intervalFunction();
+          }, 1000)
+      };
+      $scope.intervalFunction();
+  });
+  
+  app.directive('draw', ['$timeout', function(timer){
+      return {
+          restrict: 'A',
+          scope: true,
+          link: function postLink(scope, element, attrs){
+              function test(element){
+                  var canvas = newCanvas(element);
+                  var bat1 = addBat(canvas);
+                  console.log(bat1)
+                  bat1 = scale(bat1, 1.5)
+                  var text = canvas.text("test")
+                  centerOnCanvasText(canvas, text)
+                  console.log(canvas.parent().id);
+                  centerOnCanvas(canvas, bat1);
+                  //centerOnDiv(canvas.parent().id, bat1)
+                  //scale(bat1, 1.5);
+                  //var rect = canvas.rect(100, 100).attr({fill:'#06'});
+              }
+            timer(test(element[0]), 0);
+            }
+          };
+  }]);
+  
+  </script>
+
+
+  <style>
+    /* Remove the navbar's default margin-bottom and rounded borders */ 
+    .navbar {
+      margin-bottom: 0;
+      border-radius: 0;
+    }
+    
+    /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
+    .row.content {height: 450px}
+    
+    /* Set gray background color and 100% height */
+    .sidenav {
+      padding-top: 20px;
+      background-color: #f1f1f1;
+      height: 100%;
+    }
+    
+    /* Set black background color, white text and some padding */
+    footer {
+      background-color: #555;
+      color: white;
+      padding: 15px;
+    }
+    
+    /* On small screens, set height to 'auto' for sidenav and grid */
+    @media screen and (max-width: 767px) {
+      .sidenav {
+        height: auto;
+        padding: 15px;
+      }
+      .row.content {height:auto;} 
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                        
+      </button>
+      <a class="navbar-brand" href="#">Logo</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Projects</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  
+<div class="container-fluid text-center">    
+  <div class="row content">
+    <div class="col-sm-2 sidenav">
+      <p><a href="#">Link</a></p>
+      <p><a href="#">Link</a></p>
+      <p><a href="#">Link</a></p>
+    </div>
+    <div class="col-sm-8 text-left"> 
+
+<div ng-app="myApp" ng-controller="myCtrl"> 
+    <p></p>
+  <div class = "row">
+      <div class="col-lg-6" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Timestamp}} </p> </div>
+      <div class="col-lg-6" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Current}} </p> </div>
+  </div>
+  <div class = "row">
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave1}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave2}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave3}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave4}} </p> </div>
+  </div>
+  <div class = "row">
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave5}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave6}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave7}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave8}} </p> </div>
+  </div>
+  <div class = "row">
+    <div class="col-md-3" style="text-align:center" Id="canvas1" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas2" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas3" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas4" draw>  </div>
+  </div>
+  <div class = "row">
+    <div class="col-md-3" style="text-align:center" Id="canvas5" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas6" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas7" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas8" draw>  </div>
+  </div>
+</div>
+
+
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <hr>
+      <h3>Test</h3>
+      <p>Lorem ipsum...</p>
+    </div>
+    <div class="col-sm-2 sidenav">
+      <div class="well">
+        <p>ADS</p>
+      </div>
+      <div class="well">
+        <p>ADS</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="container-fluid text-center">
+  <p>Footer Text</p>
+</footer>
+
+</body>
+</html>
+

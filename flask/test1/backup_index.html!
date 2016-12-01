@@ -18,42 +18,34 @@
   
   var app = angular.module('myApp', []);
   app.run(function($rootScope){
-      $rootScope.dict = {
-        "Timestamp" : -1,
-        "Current" : -1,
-        "MVoltage" : -1,
-        "Sl1Voltage" : -1,
-        "Sl2Voltage" : -1,
-        "Sl3Voltage" : -1,
-        "Sl4Voltage" : -1,
-        "Sl5Voltage" : -1,
-        "Sl6Voltage" : -1,
-        "Sl7Voltage" : -1
-      };
+      $rootScope.Current = -1;
+      $rootScope.Timestamp = -1;
+      $rootScope.Slave1 = -1;
+      $rootScope.Slave2 = -1;
+      $rootScope.Slave3 = -1;
+      $rootScope.Slave4 = -1;
+      $rootScope.Slave5 = -1;
+      $rootScope.Slave6 = -1;
+      $rootScope.Slave7 = -1;
+      $rootScope.Slave8 = -1;
   });
   
   app.controller('myCtrl', function($scope, $rootScope, $http, $timeout) {
-      $scope.stamp2date = function(timestamp){
-        var date = new Date(timestamp*1000);
-        var hours = date.getHours();
-        var minutes = "0" + date.getMinutes();
-        var seconds = "0" + date.getSeconds();
-        var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-        return formattedTime
-      }
+      
       $scope.getData = function(){
           $http.get("http://10.128.16.13:5000/ActualValues")
           .then(function(response) {
-              $rootScope.dict["Current"] = response.data["Current"];
-              $rootScope.dict["Timestamp"] = $scope.stamp2date(response.data["Timestamp"]);
-              $rootScope.dict["MVoltage"] = response.data["MVoltage"];
-              $rootScope.dict["Sl1Voltage"] = response.data["Sl1Voltage"].toFixed(5);
-              $rootScope.dict["Sl2Voltage"] = response.data["Sl2Voltage"].toFixed(5);
-              $rootScope.dict["Sl3Voltage"] = response.data["Sl3Voltage"].toFixed(5);
-              //$rootScope.dict["Sl4Voltage"] = response.data["Sl4Voltage"].toFixed(5);
-              //$rootScope.dict["Sl5Voltage"] = response.data["Sl5Voltage"].toFixed(5);
-              //$rootScope.dict["Sl6Voltage"] = response.data["Sl6Voltage"].toFixed(5);
-              //$rootScope.dict["Sl7Voltage"] = response.data["Sl7Voltage"].toFixed(5);
+              $rootScope.Current = response.data["Current"];
+              $rootScope.Timestamp = response.data["Timestamp"];
+              $rootScope.Slave1 = response.data["MVoltage"];
+              $rootScope.Slave2 = response.data["Sl1Voltage"];
+              $rootScope.Slave3 = response.data["Sl2Voltage"];
+              $rootScope.Slave4 = response.data["Sl3Voltage"];
+              $rootScope.Slave5 = response.data["Sl4Voltage"];
+              $rootScope.Slave6 = response.data["Sl5Voltage"];
+              $rootScope.Slave7 = response.data["Sl6Voltage"];
+              $rootScope.Slave8 = response.data["Sl7Voltage"];
+              console.log(response.data["Current"]);
           });
       };
       $scope.intervalFunction = function(){
@@ -65,7 +57,7 @@
       $scope.intervalFunction();
   });
   
-  app.directive('draw', function($rootScope){
+  app.directive('draw', ['$timeout', function(timer, $rootScope){
       return {
           restrict: 'A',
           scope: true,
@@ -74,28 +66,20 @@
                   var canvas = newCanvas(element);
                   var bat1 = addBat(canvas);
                   bat1 = scale(bat1, 1.5)
-                  var divel = canvas.parent().id;
-                  var text = canvas.text(function(add){
-                      add.tspan(scope.$root.dict["Current"].toString())
-                  })
-                  text.font({
-                    family: 'Computer Modern',
-                    anchor: 'middle',
-                    size: 16 
-                  })
+                  var text = canvas.text(scope.$root.Current.toString())
                   centerOnCanvasText(canvas, text)
+                  console.log(canvas.parent().id);
                   centerOnCanvas(canvas, bat1);
-                  //console.log(scope.$root.dict["Sl5Voltage"])
-                  scope.$root.$watch('dict["'+divel.toString()+'"]', function(newVal, oldVal){
-                    //console.log('dict["'+divel.toString()+'"]')
-                    //console.log(newVal)
-                    text.tspan(newVal.toString()+' V')
+                  scope.$root.$watch('Current', function(newVal, oldVal){
+                    console.log(newVal)
+                    text.text(scope.$root.Current.toString())
+                    centerOnCanvasText(canvas, text)
                   });
               }
-            test(element[0]);
+            timer(test(element[0]), 0);
             }
           };
-  });
+  }]);
   
   </script>
 
@@ -170,22 +154,34 @@
     <div class="col-sm-8 text-left"> 
 
 <div ng-app="myApp" ng-controller="myCtrl"> 
-    <h1 style="padding-bottom:12px; border-bottom: 1px; border-bottom-style:solid; border-bottom-color:#d3d3d3;"> Actual state monitored battery </h1>
+    <p></p>
   <div class = "row">
-      <div class="col-lg-6" style="padding-top:12px; text-align:center"><p style="font-size:160%; text-align:center; border: 0px solid black; border-radius:15px; height:45px;"> <span class = "glyphicon glyphicon-time" style="text-align:center"> </span> &nbsp;  {{dict["Timestamp"]}} </p> </div>
-      <div class="col-lg-6" style="padding-top:12px;text-align:center"> <p style="text-align:center; border: 0px solid black; border-radius:15px; height:45px; font-size:160%"><span class = "glyphicon glyphicon-flash" style="text-align:center"> </span> &nbsp;  Current: {{dict["Current"]}} A </p> </div>
+      <div class="col-lg-6" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Timestamp}} </p> </div>
+      <div class="col-lg-6" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Current}} </p> </div>
   </div>
   <div class = "row">
-    <div class="col-md-3" style="text-align:center" Id="MVoltage" draw>  </div>
-    <div class="col-md-3" style="text-align:center" Id="Sl1Voltage" draw>  </div>
-    <div class="col-md-3" style="text-align:center" Id="Sl2Voltage" draw>  </div>
-    <div class="col-md-3" style="text-align:center" Id="Sl3Voltage" draw>  </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave1}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave2}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave3}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave4}} </p> </div>
   </div>
   <div class = "row">
-    <div class="col-md-3" style="text-align:center" Id="Sl4Voltage" draw>  </div>
-    <div class="col-md-3" style="text-align:center" Id="Sl5Voltage" draw>  </div>
-    <div class="col-md-3" style="text-align:center" Id="Sl6Voltage" draw>  </div>
-    <div class="col-md-3" style="text-align:center" Id="Sl7Voltage" draw>  </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave5}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave6}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave7}} </p> </div>
+      <div class="col-lg-3" style="text-align:center"> <p class="bg-info" style="border: 2px solid black; border-radius:15px; height:45px;"> {{Slave8}} </p> </div>
+  </div>
+  <div class = "row">
+    <div class="col-md-3" style="text-align:center" Id="canvas1" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas2" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas3" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas4" draw>  </div>
+  </div>
+  <div class = "row">
+    <div class="col-md-3" style="text-align:center" Id="canvas5" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas6" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas7" draw>  </div>
+    <div class="col-md-3" style="text-align:center" Id="canvas8" draw>  </div>
   </div>
 </div>
 

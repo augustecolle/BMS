@@ -22,7 +22,7 @@ for x in range(1,numslaves+3):
 try:
     au.master_init()
     au.init_meting([i for i in range(1, numslaves+1)])
-    au.getCurrent()
+    au.currentCal(50)
     firstloop = 1
 
     while True:
@@ -41,7 +41,7 @@ try:
             cur.execute("INSERT INTO Metingen VALUES("+voltagestr+")")
         sltime = loginterval - (time.time() - start)
         con.close()
-        if (sltime > 0): time.sleep(sltime)
+        if (sltime > 0 and sltime < 0.9): time.sleep(sltime)
 except:
     GPIO.cleanup()
     print(sys.exc_info()[0])

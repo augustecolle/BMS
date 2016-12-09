@@ -42,7 +42,7 @@
         return formattedTime
       }
       $scope.getData = function(){
-          $http.get("http://10.128.16.13:5000/ActualValues")
+          $http.get("http://192.168.1.46:5000/ActualValues")
           .then(function(response) {
               $rootScope.dict["Current"] = response.data["Current"];
               $rootScope.dict["Timestamp"] = $scope.stamp2date(response.data["Timestamp"]);

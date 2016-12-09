@@ -19,7 +19,12 @@ app = Flask(__name__)
 api = Api(app)
 
 p = subprocess.Popen([sys.executable, './logging2db.py'])
+
 header = ["Timestamp", "Current", "MVoltage", "Sl1Voltage", "Sl2Voltage", "Sl3Voltage", "Sl4Voltage", "Sl5Voltage", "Sl6Voltage", "Sl7Voltage", "Sl8Voltage", "Sl9Voltage", "Sl10Voltage", "Sl11Voltage", "Sl12Voltage", "Sl13Voltage", "Sl14Voltage", "Sl15Voltage"]
+
+headerBl = ["MBl", "Sl1Bl", "Sl2Bl", "Sl3Bl", "Sl4Bl", "Sl5Bl", "Sl6Bl", "Sl7Bl", "Sl8Bl", "Sl9Bl", "Sl10Bl", "Sl11Bl", "Sl12Bl", "Sl13Bl", "Sl14Bl", "Sl15Bl"]
+
+bldict = {key:value for (key, value) in zip(headerBl, [0]*len(headerBl))}
 
 class ActualValues(Resource):
     def get(self):
@@ -28,7 +33,8 @@ class ActualValues(Resource):
         with con:
             cur = con.cursor()
             #cur.execute("select * from Metingen where Timestamp = (select max(Timestamp) from Metingen)")
-            cur.execute("select * from Metingen order by Timestamp desc limit 1")
+            #cur.execute("select * from MostRecentMeasurement order by Timestamp desc limit 1")
+            cur.execute("select * from MostRecentMeasurement")
             row = cur.fetchone()
         if con: con.close()
         print(row)
@@ -38,6 +44,14 @@ class ActualValues(Resource):
             else:
                 dict[header[x]] = np.round(row[x], 2)
         return dict
+
+class BleedingControll(Resource):
+    def get(self, slave_id):
+        return bldict[slave_id]
+
+    def put(self, slave_id):
+        bldict[slave_id] = 1 if (slave_id[-2:].lower() == 'on') else 0
+        return bldict[slave_id]
 
 class write2db(Resource):
     try:
@@ -59,7 +73,7 @@ class write2db(Resource):
 
 api.add_resource(ActualValues, '/ActualValues')
 api.add_resource(write2db, '/write2db')
-
+api.add_resource(BleedingControll, '/BleedingControll/<string:slave_id>')
 
 #--- Enable CORS (cross origin requests), from: http://coalkids.github.io/flask-cors.html
 @app.before_request

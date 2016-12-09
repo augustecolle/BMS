@@ -30,15 +30,18 @@ try:
         with con:
             start = time.time()
             cur = con.cursor()
-            if (not logging or firstloop):
-                cur.execute("DROP TABLE IF EXISTS Metingen")
-                cur.execute("CREATE TABLE Metingen("+ dbTable +")")
-                firstloop = 0
             voltageAll = au.getAll([x for x in range(1,numslaves+1)])
             voltagestr = str(time.time())
             for numslave in range(numslaves + 2):
                 voltagestr = voltagestr + "," + str(voltageAll[numslave])
+            if (not logging or firstloop):
+                cur.execute("DROP TABLE IF EXISTS Metingen")
+                cur.execute("CREATE TABLE Metingen("+ dbTable +")")
+                firstloop = 0
+            cur.execute("DROP TABLE IF EXISTS MostRecentMeasurement")
+            cur.execute("CREATE TABLE MostRecentMeasurement("+ dbTable +")")
             cur.execute("INSERT INTO Metingen VALUES("+voltagestr+")")
+            cur.execute("INSERT INTO MostRecentMeasurement VALUES("+voltagestr+")")
         sltime = loginterval - (time.time() - start)
         con.close()
         if (sltime > 0 and sltime < 0.9): time.sleep(sltime)

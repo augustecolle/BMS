@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+
+import os
+os.chdir("/home/pi/spi_auguste/spi_can/flask/test1/python/")
+
 import can_lib_auguste as au
 import time
 import RPi.GPIO as GPIO

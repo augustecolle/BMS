@@ -44,7 +44,7 @@ def checksum(dataList):
 
 def readAndTreat(maxbytes = 20):
     '''Reads and treats the incomming data. The default value for the maximum on incomming bytes is arbitrary set to 100, although not so arbitrary since I think a larger response from the device is not possible unless one forgets to read the buffer. Returns the treated data as an array of hex numbers'''
-    time.sleep(0.1)
+    time.sleep(0.12)
     inBuffer = ser.read(maxbytes)
     inBuffer = binascii.hexlify(inBuffer).decode('UTF-8')
     inBuffer = [inBuffer[i:i+2] for i in range(0, len(inBuffer), 2)]
@@ -62,7 +62,6 @@ def setCurrentA(current):
     DN = str(bytearray.fromhex(DevNode))
     OBJ = b'\x33'
     setValue = hex(int(np.round((offset + current)*25600.0/iNom))).replace("0x","").zfill(4)
-    print(setValue)
     DATA1 = str(bytearray.fromhex(setValue[:2]))
     DATA2 = str(bytearray.fromhex(setValue[2:]))
     CS = checksum([SD, DN, OBJ, DATA1, DATA2])
@@ -77,12 +76,13 @@ def setPowerA(power):
     global pNom
     global pause
     correctedPower = power
-    
     for x in range(20):
         SD = b'\xD1'
         DN = str(bytearray.fromhex(DevNode))
         OBJ = b'\x34'
         setValue = hex(int(np.round(correctedPower*25600.0/pNom))).replace("0x","").zfill(4)
+        if int(setValue, 16) < 0:
+            setValue = hex(0).replace("0x","").zfill(4)
         print(setValue)
         DATA1 = str(bytearray.fromhex(setValue[:2]))
         DATA2 = str(bytearray.fromhex(setValue[2:]))

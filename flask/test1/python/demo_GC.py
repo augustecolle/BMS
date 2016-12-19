@@ -10,16 +10,25 @@ import sys
 #set signal handler
 def signal_handler(signal, frame):
     print('Exiting program cleanly')
-    tm.sleep(0.5)
+    tm.sleep(0.1)
     bb.setCurrentA(0)
+    tm.sleep(0.1)
     bb.setVoltageA(0)
+    tm.sleep(0.1)
     bb.setPowerA(0)
+    tm.sleep(0.1)
     bb.setInputOff()
+    tm.sleep(0.1)
     bb.setRemoteControllOff()
+    tm.sleep(0.1)
     bb.stopSerial()
+    tm.sleep(0.1)
     au.setVoltage(0)
+    tm.sleep(0.1)
     au.setCurrent(0)
+    tm.sleep(0.1)
     au.stopSerial()   
+    tm.sleep(0.1)
 
 #on kill and interrupt execute the signal_handler
 signal.signal(signal.SIGTERM, signal_handler)
@@ -42,15 +51,11 @@ bb.setCurrentA(0)
 bb.clearBuffer()
 
 try:
-    while(True):
+    while True:
         bb.setCurrentA(15)
-        tm.sleep(2)
+        tm.sleep(20*60)
         bb.setCurrentA(0)
-        tm.sleep(0.02)
-        au.setCurrent(15)
-        tm.sleep(2)
-        au.setCurrent(0)
-        tm.sleep(0.02)
+        tm.sleep(3*60*60)
 except:
     bb.setCurrentA(0)
     bb.setVoltageA(0)

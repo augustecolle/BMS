@@ -1,0 +1,8 @@
+DEBUG 2017-01-03 14:53:00,417 signal_testing Sitting in loop 0
+DEBUG 2017-01-03 14:53:10,616 signal_testing Sitting in loop 1
+DEBUG 2017-01-03 14:53:20,776 signal_testing Sitting in loop 2
+DEBUG 2017-01-03 14:53:31,148 signal_testing Sitting in loop 3
+CRITICAL 2017-01-03 14:53:38,632 signal_testing EXITING SYSTEM
+DEBUG 2017-01-03 15:29:44,813 signal_testing Sitting in loop 0
+DEBUG 2017-01-03 15:29:54,820 signal_testing Sitting in loop 1
+CRITICAL 2017-01-03 15:29:55,676 signal_testing EXITING SYSTEM

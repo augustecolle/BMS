@@ -2,6 +2,9 @@
 
 import os
 os.chdir("/home/pi/spi_auguste/spi_can/flask/test1/python/")
+import logging
+import logconf
+import logging.config
 import signal
 from flask import Flask, request
 from flask_restful import Resource, Api
@@ -16,15 +19,18 @@ import sqlite3 as lite
 import sys
 import subprocess
 import numpy as np
-import os
 
-#au.startSerial('/dev/ttyUSB1')
+logging.config.dictConfig(logconf.LOGGING)
+global logger
+logger = logging.getLogger('app')
+ 
+au.startSerial('/dev/ttyUSB1')
 time.sleep(0.1)
-#au.remoteControllOn()
-#au.readAndTreat()
-#au.setCurrent(0)
-#au.setVoltage(18)
-#au.setPower(500)
+au.remoteControllOn()
+au.readAndTreat()
+au.setCurrent(0)
+au.setVoltage(18)
+au.setPower(500)
 
 bb.startSerial('/dev/ttyUSB0', "02")
 time.sleep(0.1)
@@ -44,7 +50,7 @@ def shutdown():
     func()
     
 def signal_handler(signal_s, frame):
-    print('Exiting program cleanly')
+    logger.critical('EXITING SYSTEM')
     time.sleep(0.1)
     bb.setCurrentA(0)
     time.sleep(0.1)
@@ -58,15 +64,15 @@ def signal_handler(signal_s, frame):
     time.sleep(0.1)
     bb.stopSerial()
     time.sleep(0.1)
-    #au.setVoltage(0)
+    au.setVoltage(0)
     time.sleep(0.1)
-    #au.setCurrent(0)
+    au.setCurrent(0)
     time.sleep(0.1)
-    #au.stopSerial()   
+    au.stopSerial()   
     time.sleep(0.1)
     for x in get_pid("python"):
-        if (int(x) is not int(os.getpid())):
-            os.kill(int(x), signal.SIGKILL)
+        if (int(x) != int(os.getpid())):
+            os.kill(int(x), signal.SIGTERM)
     GPIO.cleanup()
     sys.exit(1)
 
@@ -99,6 +105,7 @@ bldict = {key:value for (key, value) in zip(headerBl, [0]*len(headerBl))}
 class ActualValues(Resource):
     global cut_off_voltage_low
     global cut_off_voltage_high
+    global logger
     def get(self):
         dict = {}
         con = lite.connect('/home/pi/spi_auguste/spi_can/flask/test1/python/sqlite/test.db', timeout = 5.0)
@@ -113,11 +120,11 @@ class ActualValues(Resource):
                 print(header[x])
                 print(volts)
                 if (volts < cut_off_voltage_low):
-                    print("CUT-OFF VOLTAGE LOW REACHED, SHUTTING DOWN EVERYTHING")
+                    logger.critical('UNDERVOLTAGE REACHED')
                     self.quit()
                     sys.exit(1)
                 elif (volts > cut_off_voltage_high):
-                    print("CUT-OFF VOLTAGE HIGH REACHED, SHUTTING DOWN EVERYTHING")
+                    logger.critical('OVERVOLTAGE REACHED')
                     self.quit()
                     sys.exit(1)
                 dict[header[x]] = volts

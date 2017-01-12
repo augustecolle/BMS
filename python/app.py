@@ -99,7 +99,7 @@ header = ["Timestamp", "Current", "MVoltage", "Sl1Voltage", "Sl2Voltage", "Sl3Vo
 global cut_off_voltage_low
 cut_off_voltage_low = 2.8
 global cut_off_voltage_high
-cut_off_voltage_high = 3.8
+cut_off_voltage_high = 3.7
 
 headerBl = ["MBl", "Sl1Bl", "Sl2Bl", "Sl3Bl", "Sl4Bl", "Sl5Bl", "Sl6Bl", "Sl7Bl", "Sl8Bl", "Sl9Bl", "Sl10Bl", "Sl11Bl", "Sl12Bl", "Sl13Bl", "Sl14Bl", "Sl15Bl"]
 
@@ -123,10 +123,10 @@ class ActualValues(Resource):
                 print(header[x])
                 print(volts)
                 if (volts < cut_off_voltage_low):
-                    logger.critical('UNDERVOLTAGE REACHED')
+                    logger.critical('UNDERVOLTAGE ON SLAVE %d REACHED, VOLTAGE NOW IS: %1.2f' % (x, volts))
                     self.quit()
                 elif (volts > cut_off_voltage_high):
-                    logger.critical('OVERVOLTAGE REACHED')
+                    logger.critical('OVERVOLTAGE ON SLAVE %d REACHED, VOLTAGE NOW IS: %1.2f' % (x, volts))
                     self.quit()
                 dict[header[x]] = volts
             else:
@@ -140,7 +140,7 @@ class ActualValues(Resource):
             if (int(x) != int(os.getpid()) and ('test' in process.cmdline()[1])):
                 os.kill(int(x), signal.SIGTERM)
                 logger.debug("Sent SIGTERM to process ID: %d", int(x))
-                time.sleep(30)
+                time.sleep(0.5)
         #os.kill(int(os.getpid()), signal.SIGTERM)
 
 class BleedingControll(Resource):

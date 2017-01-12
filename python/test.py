@@ -5,8 +5,8 @@ import logging
 import logconf
 import logging.config
 import signal
-import EAEL9080 as bb
-import EAPSI8720 as au
+from libraries import EAEL9080 as bb
+from libraries import EAPSI8720 as au
 import math
 import csv
 import numpy as np
@@ -21,7 +21,7 @@ def signal_handler(signal, frame):
     logger_test.critical('EXITING TEST SCRIPT')
     bb.setCurrentA(0)
     bb.setVoltageA(0)
-    bb.setPowerA(0)
+    #bb.setPowerA(0) #takes too long
     bb.setInputOff()
     bb.setRemoteControllOff()
     bb.stopSerial()
@@ -58,20 +58,20 @@ tm.sleep(1)
 try:
     while True:
         logger_test.debug("NEW TEST LOOP")
-        #au.setCurrent(15)
+        au.setCurrent(3)
         tm.sleep(20*60)
-        #au.setCurrent(0)
+        au.setCurrent(0)
         tm.sleep(3*60*60)
 except:
     logger_test.debug("Exception occured")
-    bb.setCurrentA(0)
-    bb.setVoltageA(0)
-    bb.setPowerA(0)
-    bb.setInputOff()
-    bb.setRemoteControllOff()
-    au.setVoltage(0)
-    au.setCurrent(0)
-    bb.stopSerial()
-    au.stopSerial()   
-    sys.exit(1)
+    #bb.setCurrentA(0)
+    #bb.setVoltageA(0)
+    ##bb.setPowerA(0) #takes too long
+    #bb.setInputOff()
+    #bb.setRemoteControllOff()
+    #au.setVoltage(0)
+    #au.setCurrent(0)
+    #bb.stopSerial()
+    #au.stopSerial()   
+    #sys.exit(1)
 

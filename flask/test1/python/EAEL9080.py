@@ -266,7 +266,9 @@ def getPowerA():
     OBJ = b'\x34'
     CS = checksum([SD, DN, OBJ])
     get_query = SD+DN+OBJ+CS
+    time.sleep(0.05)
     ser.write(get_query)
+    time.sleep(0.05)
     treatedData = readAndTreat()
     power = int((treatedData[3]+treatedData[4]).replace("0x",""), 16)*pNom/25600.0
     return power;
@@ -281,7 +283,9 @@ def getVoltageA():
     OBJ = b'\x32'
     CS = checksum([SD, DN, OBJ])
     get_query = SD+DN+OBJ+CS
+    time.sleep(0.05)
     ser.write(get_query)
+    time.sleep(0.05)
     treatedData = readAndTreat()
     voltage = int((treatedData[3]+treatedData[4]).replace("0x",""), 16)*vNom/25600.0
     return voltage;
@@ -332,6 +336,7 @@ def getNominalVoltage():
     CS = checksum([SD, DN, OBJ])
     get_query = SD+DN+OBJ+CS
     ser.write(get_query)
+    time.sleep(0.05)
     treatedData = readAndTreat()
     voltage = int2flp(int((treatedData[3]+treatedData[4]+treatedData[5]+treatedData[6]).replace("0x",""), 16))
     return voltage;
@@ -347,6 +352,7 @@ def getNominalPower():
     CS = checksum([SD, DN, OBJ])
     get_query = SD+DN+OBJ+CS
     ser.write(get_query)
+    time.sleep(0.05)
     treatedData = readAndTreat()
     power = int2flp(int((treatedData[3]+treatedData[4]+treatedData[5]+treatedData[6]).replace("0x",""), 16))
     return power;
@@ -368,6 +374,7 @@ def getActualValues():
     get_query = SD+DN+OBJ+CS
     time.sleep(0.05)
     ser.write(get_query)
+    time.sleep(0.005)
     treatedData = readAndTreat()
     voltage = int((treatedData[3]+treatedData[4]).replace("0x",""), 16)*vNom/25600.0
     current = int((treatedData[5]+treatedData[6]).replace("0x",""), 16)*iNom/25600.0

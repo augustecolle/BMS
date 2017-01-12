@@ -5,7 +5,7 @@ import binascii
 
 
 DevNode = "00" #device node, manual configured on machine, standard value is 01
-pause = 0.01 #used for a timeout between sending command and reading buffer for the response
+pause = 0.02 #used for a timeout between sending command and reading buffer for the response
 vNom = 720 #on machine, nominal votage
 iNom = 15
 pNom = 3000

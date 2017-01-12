@@ -13,6 +13,9 @@ import csv
 import numpy as np
 import time as tm
 import sys
+import imp
+imp.reload(au)
+imp.reload(bb)
 
 logging.config.dictConfig(logconf.LOGGING)
 logger_test = logging.getLogger('test')
@@ -20,37 +23,21 @@ logger_test = logging.getLogger('test')
 #set signal handler
 def signal_handler(signal, frame):
     logger_test.critical('EXITING TEST SCRIPT')
-    tm.sleep(0.1)
     bb.setCurrentA(0)
-    tm.sleep(0.1)
     bb.setVoltageA(0)
-    tm.sleep(0.1)
     bb.setPowerA(0)
-    tm.sleep(0.1)
     bb.setInputOff()
-    tm.sleep(0.1)
     bb.setRemoteControllOff()
-    tm.sleep(0.1)
     bb.stopSerial()
-    tm.sleep(0.1)
     au.setVoltage(0)
-    tm.sleep(0.1)
     au.setCurrent(0)
-    tm.sleep(0.1)
     au.stopSerial()   
-    tm.sleep(0.1)
 
 #on kill and interrupt execute the signal_handler
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 
-au.startSerial('/dev/ttyUSB1')
-au.remoteControllOn()
-au.readAndTreat()
-au.setCurrent(0)
-au.setVoltage(18)
-au.setPower(500)
-
+#imp.reload(bb)
 bb.startSerial('/dev/ttyUSB0', "02")
 bb.setRemoteControllOn()
 bb.setInputOn()
@@ -60,11 +47,24 @@ bb.setVoltageA(17)
 bb.setCurrentA(0)
 bb.clearBuffer()
 
+
+tm.sleep(1)
+
+au.startSerial('/dev/ttyUSB1')
+au.remoteControllOn()
+au.readAndTreat()
+#au.setCurrent(0)
+au.setVoltage(16)
+au.setPower(500)
+
+tm.sleep(1)
+#
 try:
     while True:
-        bb.setCurrentA(15)
+        logger_test.debug("NEW TEST LOOP")
+        #au.setCurrent(15)
         tm.sleep(20*60)
-        bb.setCurrentA(0)
+        #au.setCurrent(0)
         tm.sleep(3*60*60)
 except:
     logger_test.debug("Exception occured")
@@ -77,4 +77,5 @@ except:
     au.setCurrent(0)
     bb.stopSerial()
     au.stopSerial()   
+    sys.exit(1)
 

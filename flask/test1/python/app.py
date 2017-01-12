@@ -19,6 +19,7 @@ import sqlite3 as lite
 import sys
 import subprocess
 import numpy as np
+import psutil
 
 logging.config.dictConfig(logconf.LOGGING)
 global logger
@@ -71,7 +72,8 @@ def signal_handler(signal_s, frame):
     au.stopSerial()   
     time.sleep(0.1)
     for x in get_pid("python"):
-        if (int(x) != int(os.getpid())):
+        process = psutil.Process(int(x))
+        if (int(x) != int(os.getpid()) and process.cmdline()[1] == './test.py'):
             os.kill(int(x), signal.SIGTERM)
     GPIO.cleanup()
     sys.exit(1)
@@ -96,7 +98,7 @@ header = ["Timestamp", "Current", "MVoltage", "Sl1Voltage", "Sl2Voltage", "Sl3Vo
 global cut_off_voltage_low
 cut_off_voltage_low = 2.8
 global cut_off_voltage_high
-cut_off_voltage_high = 4.1
+cut_off_voltage_high = 3.5
 
 headerBl = ["MBl", "Sl1Bl", "Sl2Bl", "Sl3Bl", "Sl4Bl", "Sl5Bl", "Sl6Bl", "Sl7Bl", "Sl8Bl", "Sl9Bl", "Sl10Bl", "Sl11Bl", "Sl12Bl", "Sl13Bl", "Sl14Bl", "Sl15Bl"]
 
@@ -122,19 +124,23 @@ class ActualValues(Resource):
                 if (volts < cut_off_voltage_low):
                     logger.critical('UNDERVOLTAGE REACHED')
                     self.quit()
-                    sys.exit(1)
                 elif (volts > cut_off_voltage_high):
                     logger.critical('OVERVOLTAGE REACHED')
                     self.quit()
-                    sys.exit(1)
                 dict[header[x]] = volts
             else:
                 dict[header[x]] = np.round(row[x], 2)
         return dict
 
     def quit(self):
-        os.kill(int(os.getpid()), signal.SIGTERM)
-
+        for x in get_pid("python"):
+            process = psutil.Process(int(x))
+            logger.debug("FOUND PYTHON PROCESS WITH ID: %d", x)
+            if (int(x) != int(os.getpid()) and process.cmdline()[1] == './test.py'):
+                os.kill(int(x), signal.SIGTERM)
+                logger.debug("Sent SIGTERM to process ID: %d", int(x))
+                time.sleep(30)
+        #os.kill(int(os.getpid()), signal.SIGTERM)
 
 class BleedingControll(Resource):
     def get(self, slave_id):

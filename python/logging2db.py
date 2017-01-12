@@ -1,34 +1,27 @@
 #!/usr/bin/env python
 
-
 import os
-os.chdir("/home/pi/spi_auguste/spi_can/flask/test1/python/")
 import logging
 import logconf
 import logging.config
 import signal
-import can_lib_auguste as au
+from libraries import can_lib_auguste as au
 import time
 import RPi.GPIO as GPIO
 import sqlite3 as lite
 import sys
 import json
-import imp
-imp.reload(au)
 
+#import logger
 logging.config.dictConfig(logconf.LOGGING)
 logger = logging.getLogger('logging2db')
-     
+
+#setup signal handler
 def signal_handler(signal_s, frame):
     logger.critical('EXITING LOGGING2DB')
     sys.exit(1)
-
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
-
-def get_pid(name):
-    return map(int, subprocess.check_output(["pidof", name]).split())
-
 
 numslaves = 4 #link to database settings
 loginterval = 1 #link to database settings
@@ -47,7 +40,7 @@ try:
     firstloop = 1
 
     while True:
-        con = lite.connect('./sqlite/test.db')
+        con = lite.connect('../database/test.db')
         with con:
             start = time.time()
             cur = con.cursor()

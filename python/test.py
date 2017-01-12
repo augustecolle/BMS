@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-os.chdir("/home/pi/spi_auguste/spi_can/flask/test1/python/")
 import logging
 import logconf
 import logging.config
@@ -13,9 +12,6 @@ import csv
 import numpy as np
 import time as tm
 import sys
-import imp
-imp.reload(au)
-imp.reload(bb)
 
 logging.config.dictConfig(logconf.LOGGING)
 logger_test = logging.getLogger('test')

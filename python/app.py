@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
 import os
-os.chdir("/home/pi/spi_auguste/spi_can/flask/test1/python/")
 import logging
 import logconf
 import logging.config
 import signal
 from flask import Flask, request
 from flask_restful import Resource, Api
-import can_lib_auguste as au
-import EAEL9080 as bb
-import EAPSI8720 as au
+from libraries import can_lib_auguste as au
+from libraries import EAEL9080 as bb
+from libraries import EAPSI8720 as au
 import json
 from RPi import GPIO
 import ast
@@ -34,8 +33,10 @@ au.setVoltage(18)
 au.setPower(500)
 
 bb.startSerial('/dev/ttyUSB0', "02")
-time.sleep(0.1)
 bb.setRemoteControllOn()
+time.sleep(0.1)
+bb.readAndTreat()
+bb.readAndTreat()
 bb.setInputOn()
 bb.setCCMode()
 bb.clearBuffer()
@@ -43,7 +44,6 @@ bb.setPowerA(1000)
 bb.setVoltageA(17)
 bb.setCurrentA(0)
 bb.clearBuffer()
-
 def shutdown():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
@@ -73,7 +73,9 @@ def signal_handler(signal_s, frame):
     time.sleep(0.1)
     for x in get_pid("python"):
         process = psutil.Process(int(x))
-        if (int(x) != int(os.getpid()) and process.cmdline()[1] == './test.py'):
+        logger.debug("FOUND PYTHON PROCESS WITH ID: %d IN SIGNAL HANDLER OF APP.PY", x)
+        logger.debug("Content of process.cmdline(): %s", process.cmdline())
+        if (int(x) != int(os.getpid()) and process.cmdline() != [] and 'test' in process.cmdline()[1]):
             os.kill(int(x), signal.SIGTERM)
     GPIO.cleanup()
     sys.exit(1)
@@ -86,7 +88,6 @@ def get_pid(name):
 
 plogging = subprocess.Popen([sys.executable, './logging2db.py'])
 time.sleep(2) #waiting for current calibration
-#subprocess.Popen([sys.executable, './test.py'])
 
 numslaves = 3 #link to database settings
 con = None
@@ -98,7 +99,7 @@ header = ["Timestamp", "Current", "MVoltage", "Sl1Voltage", "Sl2Voltage", "Sl3Vo
 global cut_off_voltage_low
 cut_off_voltage_low = 2.8
 global cut_off_voltage_high
-cut_off_voltage_high = 3.5
+cut_off_voltage_high = 3.8
 
 headerBl = ["MBl", "Sl1Bl", "Sl2Bl", "Sl3Bl", "Sl4Bl", "Sl5Bl", "Sl6Bl", "Sl7Bl", "Sl8Bl", "Sl9Bl", "Sl10Bl", "Sl11Bl", "Sl12Bl", "Sl13Bl", "Sl14Bl", "Sl15Bl"]
 
@@ -110,7 +111,7 @@ class ActualValues(Resource):
     global logger
     def get(self):
         dict = {}
-        con = lite.connect('/home/pi/spi_auguste/spi_can/flask/test1/python/sqlite/test.db', timeout = 5.0)
+        con = lite.connect('../database/test.db', timeout = 5.0)
         with con:
             cur = con.cursor()
             cur.execute("select * from MostRecentMeasurement")
@@ -136,7 +137,7 @@ class ActualValues(Resource):
         for x in get_pid("python"):
             process = psutil.Process(int(x))
             logger.debug("FOUND PYTHON PROCESS WITH ID: %d", x)
-            if (int(x) != int(os.getpid()) and process.cmdline()[1] == './test.py'):
+            if (int(x) != int(os.getpid()) and ('test' in process.cmdline()[1])):
                 os.kill(int(x), signal.SIGTERM)
                 logger.debug("Sent SIGTERM to process ID: %d", int(x))
                 time.sleep(30)
@@ -152,7 +153,7 @@ class BleedingControll(Resource):
 
 class write2db(Resource):
     try:
-        con = lite.connect('./sqlite/test.db')
+        con = lite.connect('../database/test.db')
         cur = con.cursor()
         cur.execute('SELECT SQLITE_VERSION()')
         data = cur.fetchone()

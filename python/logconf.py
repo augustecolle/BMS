@@ -21,7 +21,7 @@ LOGGING = {
         'file': {
             'level' : 'DEBUG',
             'class' : 'logging.FileHandler',
-            'filename' : './debug.log',
+            'filename' : '../logs/debug.log',
             'formatter' : 'simple',
         },
         'mail': {

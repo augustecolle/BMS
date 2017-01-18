@@ -1,18 +1,25 @@
 
-DEBUG 2017-01-12 10:07:52,739 test NEW TEST LOOP
-CRITICAL 2017-01-12 10:08:28,891 app OVERVOLTAGE ON SLAVE 4 REACHED, VOLTAGE NOW IS: 3.70
-DEBUG 2017-01-12 10:08:29,107 app FOUND PYTHON PROCESS WITH ID: 4025
-CRITICAL 2017-01-12 10:08:29,108 test EXITING TEST SCRIPT
-DEBUG 2017-01-12 10:08:29,109 app Sent SIGTERM to process ID: 4025
-DEBUG 2017-01-12 10:08:29,376 test Exception occured
-DEBUG 2017-01-12 10:08:29,611 app FOUND PYTHON PROCESS WITH ID: 3555
-DEBUG 2017-01-12 10:08:29,612 app FOUND PYTHON PROCESS WITH ID: 3533
-DEBUG 2017-01-12 10:08:29,612 app FOUND PYTHON PROCESS WITH ID: 1608
-CRITICAL 2017-01-12 10:08:29,891 app OVERVOLTAGE ON SLAVE 4 REACHED, VOLTAGE NOW IS: 3.70
-DEBUG 2017-01-12 10:08:30,126 app FOUND PYTHON PROCESS WITH ID: 3555
-DEBUG 2017-01-12 10:08:30,128 app FOUND PYTHON PROCESS WITH ID: 3533
-DEBUG 2017-01-12 10:08:30,131 app FOUND PYTHON PROCESS WITH ID: 1608
-CRITICAL 2017-01-12 10:08:30,895 app OVERVOLTAGE ON SLAVE 4 REACHED, VOLTAGE NOW IS: 3.70
-DEBUG 2017-01-12 10:08:31,141 app FOUND PYTHON PROCESS WITH ID: 3555
-DEBUG 2017-01-12 10:08:31,142 app FOUND PYTHON PROCESS WITH ID: 3533
-DEBUG 2017-01-12 10:08:31,143 app FOUND PYTHON PROCESS WITH ID: 1608
+DEBUG 2017-01-17 09:23:10,661 logging2db An error occurred: table Metingen has 10 columns but 9 values were supplied
+CRITICAL 2017-01-17 12:04:33,887 logging2db EXITING LOGGING2DB
+DEBUG 2017-01-18 09:08:57,742 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 09:08:59,679 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 09:31:27,370 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 09:31:29,313 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 09:46:43,693 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 09:46:45,752 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 09:58:46,092 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 09:58:48,095 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 10:24:07,927 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 10:24:09,920 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 10:52:07,971 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 10:52:09,973 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 11:11:59,442 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 11:12:01,436 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 11:18:29,918 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 11:18:31,921 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 11:23:14,277 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 11:23:16,279 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 11:25:32,444 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 11:25:34,381 logging2db only got 5 values from tempsensors
+DEBUG 2017-01-18 11:52:50,439 logging2db only got 3 values from tempsensors
+DEBUG 2017-01-18 11:52:52,392 logging2db only got 5 values from tempsensors

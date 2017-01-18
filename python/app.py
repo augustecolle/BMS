@@ -19,6 +19,7 @@ import sys
 import subprocess
 import numpy as np
 import psutil
+import tempconf
 
 logging.config.dictConfig(logconf.LOGGING)
 global logger
@@ -44,6 +45,7 @@ bb.setPowerA(1000)
 bb.setVoltageA(17)
 bb.setCurrentA(0)
 bb.clearBuffer()
+
 def shutdown():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
@@ -86,7 +88,7 @@ signal.signal(signal.SIGINT, signal_handler)
 def get_pid(name):
     return map(int, subprocess.check_output(["pidof", name]).split())
 
-plogging = subprocess.Popen([sys.executable, './logging2db.py'])
+#plogging = subprocess.Popen([sys.executable, './logging2db.py'])
 time.sleep(2) #waiting for current calibration
 
 numslaves = 3 #link to database settings
@@ -110,28 +112,40 @@ class ActualValues(Resource):
     global cut_off_voltage_high
     global logger
     def get(self):
-        dict = {}
+        dataDict = {}
         con = lite.connect('../database/test.db', timeout = 5.0)
         with con:
             cur = con.cursor()
-            cur.execute("select * from MostRecentMeasurement")
+            success = False
+            while not success:
+                try:
+                    cur.execute("select * from MostRecentMeasurement")
+                    success = True
+                except:
+                    time.sleep(0.01)
             row = cur.fetchone()
+            colNames = list(map(lambda x: x[0], cur.description))
+            dataDict = dict(zip(colNames, row))
+            # map keys to their number of rings on the data cable
+            for (key, val) in tempconf.tempmap.items():
+                if key in dataDict:
+                    dataDict[val] = dataDict.pop(key)
         if con: con.close()
-        for x in range(0, numslaves + 3):
-            if header[x] is not "Current" and header[x] is not "Timestamp":
-                volts = np.round(row[x], 5)
-                print(header[x])
-                print(volts)
-                if (volts < cut_off_voltage_low):
+        for x in dataDict.keys():
+            if "Voltage" in x:
+                dataDict[x] = round(dataDict[x], 5)
+                print(round(dataDict[x], 5))
+                #print(dataDict[x])
+                if (dataDict[x] < cut_off_voltage_low):
                     logger.critical('UNDERVOLTAGE ON SLAVE %d REACHED, VOLTAGE NOW IS: %1.2f' % (x, volts))
                     self.quit()
-                elif (volts > cut_off_voltage_high):
+                elif (dataDict[x] > cut_off_voltage_high):
                     logger.critical('OVERVOLTAGE ON SLAVE %d REACHED, VOLTAGE NOW IS: %1.2f' % (x, volts))
                     self.quit()
-                dict[header[x]] = volts
             else:
-                dict[header[x]] = np.round(row[x], 2)
-        return dict
+                dataDict[x] = round(dataDict[x], 2)
+        print(dataDict)
+        return dataDict
 
     def quit(self):
         for x in get_pid("python"):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import logging
@@ -6,11 +6,15 @@ import logconf
 import logging.config
 import signal
 from libraries import can_lib_auguste as au
+import temp_reading_multithreading as ds18b20
 import time
 import RPi.GPIO as GPIO
 import sqlite3 as lite
 import sys
 import json
+
+ds18b20.read_temp_raw() #start temperature conversion in sensors
+tempinterval = 2
 
 #import logger
 logging.config.dictConfig(logconf.LOGGING)
@@ -23,7 +27,7 @@ def signal_handler(signal_s, frame):
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 
-numslaves = 4 #link to database settings
+numslaves = 3 #link to database settings
 loginterval = 1 #link to database settings
 logging = 1 #link to database settings
 
@@ -33,22 +37,39 @@ dbTable = "Timestamp REAL"
 for x in range(1,numslaves+3):
     dbTable = dbTable + ", " + tablestruct[x]
 
+for sensor in ds18b20.device_folder:
+    print(sensor[-15:])
+    dbTable = dbTable + ", " + "T" + sensor[-12:] + " REAL"
+
+
 try:
     au.master_init()
     au.init_meting([i for i in range(1, numslaves+1)])
     au.currentCal(50)
     firstloop = 1
-
+    count = 0
+    tempcount = 0
     while True:
-        con = lite.connect('../database/test.db')
+        con = lite.connect('../database/test.db', timeout = 5.0)
         with con:
             start = time.time()
             cur = con.cursor()
             voltageAll = au.getAll([x for x in range(1,numslaves+1)])
             voltagestr = str(time.time())
+            #Only once in 2 measurements (2 seconds interval) because temp reading takes 1.1 seconds
+            if (count % tempinterval == 0):
+                tmp = ds18b20.read_temp()
+                if(len(tmp) == 4):
+                    templist = tmp
+                    count = 0
+                else:
+                    logger.debug("only got %d values from tempsensors", len(tmp))
+                ds18b20.read_temp_raw()
             for numslave in range(numslaves + 2):
                 voltagestr = voltagestr + "," + str(voltageAll[numslave])
-            if (not logging or firstloop):
+            for temp in templist:
+                voltagestr = voltagestr + "," + str(temp)
+            if (firstloop):
                 cur.execute("DROP TABLE IF EXISTS Metingen")
                 cur.execute("CREATE TABLE Metingen("+ dbTable +")")
                 firstloop = 0
@@ -58,7 +79,10 @@ try:
             cur.execute("INSERT INTO MostRecentMeasurement VALUES("+voltagestr+")")
         sltime = loginterval - (time.time() - start)
         con.close()
+        count = count + 1
         if (sltime > 0 and sltime < 0.9): time.sleep(sltime)
+except lite.Error as e:
+    logger.debug("An error occurred: " + e.args[0])
 except:
     GPIO.cleanup()
     print(sys.exc_info()[0])
